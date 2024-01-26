@@ -1,0 +1,36 @@
+{
+    "data": [
+        {
+            "key": "rules",
+            "value": "{\"embargoedCountries\":{\"|\":[{\"=\":{\"header\":{\"cloudfront-viewer-country\":\"UA\"}}},{\"=\":{\"header\":{\"cloudfront-viewer-country\":\"FR\"}}}]},\"default\":{\"match\":{\"uri\":\".*\"}},\"adminRedirect\":{\"&\":[{\"=\":{\"uri\":\"/admin\"}},{\"exist\":{\"cookie\":{\"session\":\"\"}}}]},\"adminAccess\":{\"=\":{\"uri\":\"/admin\"}},\"apiService1\":{\"startwith\":{\"uri\":\"/api/service1\"}},\"apiService2\":{\"startwith\":{\"uri\":\"/api/service2\"}},\"aboutABtesting\":{\"=\":{\"uri\":\"/about\"}}}"
+        },
+        {
+            "key": "embargoedCountries",
+            "value": "{\"respond\":{\"status\":403}}"
+        },
+        {
+            "key": "default",
+            "value": "{\"forward\":{\"origin\":\"s3://originbucket\"}}"
+        },
+        {
+            "key": "adminRedirect",
+            "value": "{\"respond\":{\"status\":403,\"setRespHeaders\":{\"location\":\"https://mydomain.com/login\"}}}"
+        },
+        {
+            "key": "AdminAccess",
+            "value": "{\"forward\":{\"origin\":\"s3://originbucket\",\"auth\":{\"key\":\"LzdWGpAToQ1DqYuzHxE6YOqi7G3X2yvNBot9mCXfx5k\"}}}"
+        },
+        {
+            "key": "apiService1",
+            "value": "{\"forward\":{\"origin\":\"api1.example.com\",\"setReqHeaders\":{\"x-secret-key\":\"lPuzHxE0KOqi7GS34y\"}}}"
+        },
+        {
+            "key": "apiService2",
+            "value": "{\"forward\":{\"origin\":\"api2.example.com\",\"setReqHeaders\":{\"x-secret-key\":\"lPuzHxE0KOqi7GS34y\"}}}"
+        },
+        {
+            "key": "aboutABtesting",
+            "value": "{\"canary\":[[70,{\"forward\":{\"origin\":\"s3://originbucket\",\"uri\":\"/about\"}}],[30,{\"forward\":{\"origin\":\"s3://originbucket\",\"uri\":\"/aboutV2\"}}]]}"
+        }
+    ]
+}               
