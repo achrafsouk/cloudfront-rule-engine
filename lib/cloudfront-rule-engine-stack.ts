@@ -82,12 +82,24 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
+    new cdk.aws_s3_deployment.BucketDeployment(this, 'DeployWebsite', {
+      sources: [cdk.aws_s3_deployment.Source.asset('./html')],
+      destinationBucket: originBucket,
+    });
+
     // TODO minify JSON
+
+    let rules = fs.readFileSync(path.join(__dirname, "../rules/rules.json"), 'utf-8');
+    rules = rules.replaceAll(/__ORIGIN_S3_BUCKET__/g, "s3://cloudfrontruleenginestack-originbucket96e3b673-be7prtlatnfi");//"s3://"+ cdk.Fn.ref(originBucket.bucketName));
+    rules = rules.replaceAll(/___APIA___/g, "https://bagqzfog1j.execute-api.us-east-1.amazonaws.com");//cdk.Fn.parseDomainName(apiAURL));
+    rules = rules.replaceAll(/___APIB__/g, "https://2qjqmqfc68.execute-api.us-east-1.amazonaws.com");//cdk.Fn.parseDomainName(apiBURL));
+
+    fs.writeFileSync(path.join(__dirname, "../cdk.out/rules.json"), rules);
 
     // Rule engine
     const kvs = new cloudfront.KeyValueStore(this, 'KeyValueStore', {
       keyValueStoreName: 'engine-rules2',
-      source: cloudfront.ImportSource.fromAsset('rules/rules.json'),
+      source: cloudfront.ImportSource.fromAsset("cdk.out/rules.json"),
     });
 
     let cloudFrontFunctionCode = fs.readFileSync(path.join(__dirname, "../functions/cff-viewer/index.js"), 'utf-8');
@@ -108,6 +120,55 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       'KeyValueStoreARN': kvs.keyValueStoreArn
       }]);
 
+    // Using Lambda@Edge temporarily until CloudFront Functions supports origin selection
+    const originSelection = new cloudfront.experimental.EdgeFunction(this, 'MyFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'index.handler',
+      code: lambda.Code.fromInline(`
+      exports.handler = async function(event) {
+        const request = event.Records[0].cf.request;
+        if (request.headers['x-origin'] && request.headers['x-origin'][0].value) {
+          let origin = request.headers['x-origin'][0].value;
+          if (origin.startsWith("s3://")) {
+            origin = origin.slice(5)+".s3.amazonaws.com";
+            request.origin = {
+              s3: {
+                  domainName: origin,
+                  region: 'us-east-1',
+                  authMethod: 'origin-access-identity',
+                  path: '',
+                  customHeaders: {}
+              }
+            };
+            request.headers['host'] = [{ key: 'host', value: origin}];
+            return request;
+          } else {
+            origin = origin.slice(8);
+            request.origin = {
+              custom: {
+                  domainName: origin,
+                  port: 443,
+                  protocol: 'https',
+                  path: '',
+                  sslProtocols: ['TLSv1', 'TLSv1.1'],
+                  readTimeout: 5,
+                  keepaliveTimeout: 5,
+                  customHeaders: {}
+              }
+            };
+          request.headers['host'] = [{ key: 'host', value: origin}];
+          return request;
+          }
+        }
+        console.log("No x-origin header sent");
+        return {
+          statusCode: '500',
+          statusDescription: 'Internal Server Error',
+        };
+      };
+    `),
+    });
+
     // CloudFront distribution
     const cloudfrontDistribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: 'CloudFront Rule Engine example',
@@ -127,6 +188,12 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
             function: cfFunction,
             eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
           }],
+          edgeLambdas: [
+            {
+              functionVersion: originSelection.currentVersion,
+              eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
+            }
+          ],
       },    
     });
 

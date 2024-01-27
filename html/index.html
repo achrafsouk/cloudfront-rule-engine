@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>CloudFront rule engine</h1>
+
+<p>1. Test the A/B testing rule, by visiting the <a href="/about.html">about</a> page.</p>
+
+<p>2. Test origin routing rules using the below buttons </p>
+<table>
+    <tr>
+        <td><button onclick='api1()'>API1()</button></td>
+        <td><p id='api1'></p></td>
+    </tr>
+    <tr>
+        <td><button onclick='api2()'>API2()</button></td>
+        <td><p id='api2'></p></td>
+    </tr>
+</table>
+
+<p>3. Test the authorization rule, by visiting the <a href="/admin.html">admin</a> page.</p>
+
+<p>4. Test the geoblocking rule, by connecting from a banned country using VPN.</p>
+
+<script>
+    function api1() {
+      const container = document.getElementById('api1');
+      container.innerHTML = '';
+      fetch("/api/a",{}).then(response => {
+          response.json().then(myJson => { container.innerHTML = myJson.version });
+      });
+    }
+    function api2() {
+      const container = document.getElementById('api2');
+      container.innerHTML = '';
+      fetch("/api/b",{}).then(response => {
+          response.json().then(myJson => { container.innerHTML = myJson.version });
+      });
+    }
+</script>
+</body>
+</html>

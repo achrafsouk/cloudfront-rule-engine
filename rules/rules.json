@@ -2,7 +2,7 @@
     "data": [
         {
             "key": "rules",
-            "value": "{\"embargoedCountries\":{\"|\":[{\"=\":{\"header\":{\"cloudfront-viewer-country\":\"UA\"}}},{\"=\":{\"header\":{\"cloudfront-viewer-country\":\"FR\"}}}]},\"default\":{\"match\":{\"uri\":\".*\"}},\"adminRedirect\":{\"&\":[{\"=\":{\"uri\":\"/admin\"}},{\"exist\":{\"cookie\":{\"session\":\"\"}}}]},\"adminAccess\":{\"=\":{\"uri\":\"/admin\"}},\"apiService1\":{\"startwith\":{\"uri\":\"/api/service1\"}},\"apiService2\":{\"startwith\":{\"uri\":\"/api/service2\"}},\"aboutABtesting\":{\"=\":{\"uri\":\"/about\"}}}"
+            "value": "{\"embargoedCountries\":{\"|\":[{\"=\":{\"header\":{\"cloudfront-viewer-country\":\"UA\"}}},{\"=\":{\"header\":{\"cloudfront-viewer-country\":\"FR\"}}}]},\"adminRedirect\":{\"&\":[{\"=\":{\"uri\":\"/admin.html\"}},{\"exist\":{\"cookie\":{\"session\":\"false\"}}}]},\"adminAccess\":{\"=\":{\"uri\":\"/admin.html\"}},\"api_a\":{\"startwith\":{\"uri\":\"/api/a\"}},\"api_b\":{\"startwith\":{\"uri\":\"/api/b\"}},\"aboutABtesting\":{\"=\":{\"uri\":\"/about.html\"}},\"default\":{\"match\":{\"uri\":\".*\"}}}"
         },
         {
             "key": "embargoedCountries",
@@ -10,27 +10,27 @@
         },
         {
             "key": "default",
-            "value": "{\"forward\":{\"origin\":\"s3://originbucket\"}}"
+            "value": "{\"forward\":{\"origin\":\"__ORIGIN_S3_BUCKET__\"}}"
         },
         {
             "key": "adminRedirect",
-            "value": "{\"respond\":{\"status\":403,\"setRespHeaders\":{\"location\":\"https://mydomain.com/login\"}}}"
+            "value": "{\"respond\":{\"status\":307,\"setRespHeaders\":{\"location\":\"/login.html\"}}}"
         },
         {
-            "key": "AdminAccess",
-            "value": "{\"forward\":{\"origin\":\"s3://originbucket\",\"auth\":{\"key\":\"LzdWGpAToQ1DqYuzHxE6YOqi7G3X2yvNBot9mCXfx5k\"}}}"
+            "key": "adminAccess",
+            "value": "{\"forward\":{\"origin\":\"__ORIGIN_S3_BUCKET__\",\"auth\":{\"key\":\"LzdWGpAToQ1DqYuzHxE6YOqi7G3X2yvNBot9mCXfx5k\"}}}"
         },
         {
-            "key": "apiService1",
-            "value": "{\"forward\":{\"origin\":\"api1.example.com\",\"setReqHeaders\":{\"x-secret-key\":\"lPuzHxE0KOqi7GS34y\"}}}"
+            "key": "api_a",
+            "value": "{\"forward\":{\"origin\":\"___APIA___\",\"setReqHeaders\":{\"x-secret-key\":\"lPuzHxE0KOqi7GS34y\"},\"changeUri\":\"/prod/api-a\"}}"
         },
         {
-            "key": "apiService2",
-            "value": "{\"forward\":{\"origin\":\"api2.example.com\",\"setReqHeaders\":{\"x-secret-key\":\"lPuzHxE0KOqi7GS34y\"}}}"
+            "key": "api_b",
+            "value": "{\"forward\":{\"origin\":\"___APIB__\",\"setReqHeaders\":{\"x-secret-key\":\"lPuzHxE0KOqi7GS34y\"},\"changeUri\":\"/prod/api-b\"}}"
         },
         {
             "key": "aboutABtesting",
-            "value": "{\"canary\":[[70,{\"forward\":{\"origin\":\"s3://originbucket\",\"uri\":\"/about\"}}],[30,{\"forward\":{\"origin\":\"s3://originbucket\",\"uri\":\"/aboutV2\"}}]]}"
+            "value": "{\"canary\":[[50,{\"forward\":{\"origin\":\"__ORIGIN_S3_BUCKET__\",\"changeUri\":\"/about.html\"}}],[50,{\"forward\":{\"origin\":\"__ORIGIN_S3_BUCKET__\",\"changeUri\":\"/about2.html\"}}]]}"
         }
     ]
 }               
