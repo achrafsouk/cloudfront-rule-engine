@@ -1,3 +1,4 @@
+// TODO simplify and homogenize the following declarations
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
@@ -7,8 +8,19 @@ import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as fs from "fs";
 import * as path from "path";
+var UglifyJS = require("uglify-js");
 
-
+const API_INLINE_CODE = `
+      exports.handler = async function(event) {
+        return {
+          statusCode: 200,
+          headers: { "content-type": "application/json" },
+          body:  JSON.stringify({
+            'message': '___MESSAGE___'
+          }),
+        };
+      };
+    `;
 export class CloudfrontRuleEngineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -17,17 +29,7 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
     const functionA = new lambda.Function(this, 'functionA', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-      exports.handler = async function(event) {
-        return {
-          statusCode: 200,
-          headers: { "content-type": "application/json" },
-          body:  JSON.stringify({
-            'version': 'A'
-          }),
-        };
-      };
-    `),
+      code: lambda.Code.fromInline(API_INLINE_CODE.replace('___MESSAGE___', 'The message was fetched from clients API'))
     });
 
     const apiA = new apiGateway.RestApi(this, "apiA", {
@@ -36,28 +38,16 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       },
     });
 
-    apiA.root.addResource('api-a').addMethod(
+    apiA.root.addResource('clients').addMethod(
         'GET',
         new apiGateway.LambdaIntegration(functionA, {proxy: true}),
     );
-
-    const apiAURL = apiA.url + 'api-a';
 
     // Create API B
     const functionB = new lambda.Function(this, 'functionB', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-      exports.handler = async function(event) {
-        return {
-          statusCode: 200,
-          headers: { "content-type": "application/json" },
-          body:  JSON.stringify({
-            'version': 'B'
-          }),
-        };
-      };
-    `),
+      code: lambda.Code.fromInline(API_INLINE_CODE.replace('___MESSAGE___', 'The message was fetched from orders API'))
     });
 
     const apiB = new apiGateway.RestApi(this, "apiB", {
@@ -66,14 +56,14 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       },
     });
 
-    apiB.root.addResource('api-b').addMethod(
+    apiB.root.addResource('orders').addMethod(
         'GET',
         new apiGateway.LambdaIntegration(functionB, {proxy: true}),
     );
 
-    const apiBURL = apiB.url + 'api-b';
+    apiB.domainName
 
-    // S3 origin
+    // S3 bucket to host the website files
     const originBucket = new s3.Bucket(this, 'origin-bucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -87,40 +77,37 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       destinationBucket: originBucket,
     });
 
-    // TODO minify JSON
-
-    let rules = fs.readFileSync(path.join(__dirname, "../rules/rules.json"), 'utf-8');
-    rules = rules.replaceAll(/__ORIGIN_S3_BUCKET__/g, "s3://cloudfrontruleenginestack-originbucket96e3b673-be7prtlatnfi");//"s3://"+ cdk.Fn.ref(originBucket.bucketName));
-    rules = rules.replaceAll(/___APIA___/g, "https://bagqzfog1j.execute-api.us-east-1.amazonaws.com");//cdk.Fn.parseDomainName(apiAURL));
-    rules = rules.replaceAll(/___APIB__/g, "https://2qjqmqfc68.execute-api.us-east-1.amazonaws.com");//cdk.Fn.parseDomainName(apiBURL));
-
-    fs.writeFileSync(path.join(__dirname, "../cdk.out/rules.json"), rules);
-
-    // Rule engine
+    // Create KeyValueStore that will store the engine rules
     const kvs = new cloudfront.KeyValueStore(this, 'KeyValueStore', {
-      keyValueStoreName: 'engine-rules2',
-      source: cloudfront.ImportSource.fromAsset("cdk.out/rules.json"),
+      keyValueStoreName: 'cff-engine-rules',
     });
 
+    // Replace KVS id in the CloudFront Function code, then minify the code
     let cloudFrontFunctionCode = fs.readFileSync(path.join(__dirname, "../functions/cff-viewer/index.js"), 'utf-8');
-
     cloudFrontFunctionCode = cloudFrontFunctionCode.replace(/__KVS_ID__/g, kvs.keyValueStoreId);
+    // TODO consider better compression, wihtout breaking the function code
+    var minificationResult = UglifyJS.minify(cloudFrontFunctionCode, {
+      compress: false
+    });
+    if (minificationResult.error) throw new Error("Issue in minification of CFF code");
+    cloudFrontFunctionCode = minificationResult.code;
 
-    // TODO minify https://stackoverflow.com/questions/18878011/minify-javascript-programmatically-in-memory
-
+    // Create the CloudFront Function that will execute the rules stored in KVS
     const cfFunction = new cloudfront.Function(this, 'CFFunction', {
       code: cloudfront.FunctionCode.fromInline(cloudFrontFunctionCode),
       runtime: cloudfront.FunctionRuntime.JS_2_0,
       functionName: 'rulesEngine'
     });
 
-    // add CFF association
+    // Associate CloudFront Function to KVS 
     (cfFunction.node.defaultChild as cloudfront.CfnFunction).addPropertyOverride("FunctionConfig.KeyValueStoreAssociations",
       [{ 
       'KeyValueStoreARN': kvs.keyValueStoreArn
       }]);
 
-    // Using Lambda@Edge temporarily until CloudFront Functions supports origin selection
+    // Using Lambda@Edge on origin request evennt temporarily 
+    // until CloudFront Functions supports origin selection
+    // TODO remove this section all together when the feature is out.
     const originSelection = new cloudfront.experimental.EdgeFunction(this, 'MyFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
@@ -169,7 +156,7 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
     `),
     });
 
-    // CloudFront distribution
+    // Create the CloudFront distribution
     const cloudfrontDistribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: 'CloudFront Rule Engine example',
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2018,
@@ -197,10 +184,11 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       },    
     });
 
-
-    new cdk.CfnOutput(this, 'api-a', { value: apiAURL});
-    new cdk.CfnOutput(this, 'api-b', { value: apiBURL});
-    new cdk.CfnOutput(this, 'cloudfront', {value: cloudfrontDistribution.distributionDomainName});
+    new cdk.CfnOutput(this, 's3-bucket', { value: originBucket.bucketName});
+    new cdk.CfnOutput(this, 'kvs-arn', { value: kvs.keyValueStoreArn});
+    new cdk.CfnOutput(this, 'api-a', { value: apiA.url});
+    new cdk.CfnOutput(this, 'api-b', { value: apiB.url});
+    new cdk.CfnOutput(this, 'HTML URL', {value: cloudfrontDistribution.distributionDomainName+'/index.html'});
            
   }
 }

@@ -1,155 +1,26 @@
 # CloudFront Rule Engine
 
-Demonstrating a rule engine in CloudFront implemented using KVS and CloudFront Functions
+This solution demonstrates the usage of CloudFront Function to execute rules when processing incoming HTTP requests. Rules are stored in KVS and can be viewed in the rules.array file. This solution allows customers to dyanmically customize the processing of HTTP requests, wihtout changing CloudFront configuration.
 
-Deploy in us-east 1 only
 
-Example rules
+Configure your AWS CLI to us-east 1 region
 
-{
-    "embargoedCountries": {
-        "|": [
-            {
-                "=": {
-                    "header": {
-                        "cloudfront-viewer-country": "UA"
-                    }
-                }
-            },
-            {
-                "=": {
-                    "header": {
-                        "cloudfront-viewer-country": "FR"
-                    }
-                }
-            }
-        ]
-    },
-    "adminRedirect": {
-        "&": [
-            {
-                "=": {
-                    "uri": "/admin.html"
-                }
-            },
-            {
-                "!": {
-                    "exist": {
-                        "cookie": {
-                            "session": ""
-                        }
-                    }
-                }
-            }
-        ]
-    },
-    "adminAccess": {
-        "=": {
-            "uri": "/admin.html"
-        }
-    },
-    "api_a": {
-        "startwith": {
-            "uri": "/api/a"
-        }
-    },
-    "api_b": {
-        "startwith": {
-            "uri": "/api/b"
-        }
-    },
-    "aboutABtesting": {
-        "=": {
-            "uri": "/about.html"
-        }
-    },
-    "default": {
-        "match": {
-            "uri": ".*"
-        }
-    }
+npm install
+cdk deploy --outputs-file outputs.json
+bash fill_kvs.sh
+
+
+# Roadmap
+
+Add the possibility of non terminating rule
+Remove Lambda@Edge and enable CloudFront Function origin selection when released
+Add URL actions, such as prefix and suffix
+
+const prefixUri = args["prefixUri"];
+if (prefixUri) {
+    returnObj.uri = prefixUri + returnObj.uri;
 }
-
-
-**Actions of embargoedCountries**
-{
-    "respond": {
-        "status": 403
-    }
-}
-
-**Actions of default**
-{
-    "forward": {
-        "origin": "s3://originbucket"
-    }
-}
-
-**Actions of adminRedirect**
-{
-    "respond": {
-        "status": 307,
-        "setRespHeaders": {
-            "location": "/login.html"
-        }
-    }
-}
-
-test with 
-
-curl -v https://d1w2qld8c51tvs.cloudfront.net/admin.html -H 'cookie:session=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJuYmYiOjE1MTYyMzkwMjIsImV4cCI6MTcxNjIzOTAyMn0.jyu6HjS95wU8iSofQ8nBlmPjFYODxn4PQAdFM-Cv8JY'
-
-
-**Actions of AdminAccess**
-{
-    "forward": {
-        "origin": "s3://originbucket",
-        "auth": {
-            "key": "LzdWGpAToQ1DqYuzHxE6YOqi7G3X2yvNBot9mCXfx5k"
-        }
-    }
-}
-
-**Actions of apiService1**
-{
-    "forward": {
-        "origin": "api1.example.com",
-        "setReqHeaders": {
-            "x-secret-key": "lPuzHxE0KOqi7GS34y"
-        }
-    }
-}
-
-**Actions of apiService2**
-{
-    "forward": {
-        "origin": "api2.example.com",
-        "setReqHeaders": {
-            "x-secret-key": "lPuzHxE0KOqi7GS34y"
-        }
-    }
-}
-
-**Actions of aboutABtesting**
-{
-    "canary": [
-        [
-            50,
-            {
-                "forward": {
-                    "origin": "__ORIGIN_S3_BUCKET__",
-                    "uri": "/about.html"
-                }
-            }
-        ],
-        [
-            50,
-            {
-                "forward": {
-                    "origin": "__ORIGIN_S3_BUCKET__",
-                    "uri": "/about2.html"
-                }
-            }
-        ]
-    ]
+    const suffixUri = args["suffixUri"];
+if (suffixUri) {
+    returnObj.uri = returnObj.uri + suffixUri;
 }

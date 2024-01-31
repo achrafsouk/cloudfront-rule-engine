@@ -1,42 +1,135 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CloudFront Rule Engine</title>
+</head>
+
 <body>
+	<!--Header(start)-->
+	<table id="header" border="0" width="100%" cellpadding="0" cellspacing="0" bgcolor="#0066cc">
+		<tbody><tr>
+			<td>
+				<table border="0" cellpadding="15" cellspacing="0" width="90%" align="center">
+					<tbody><tr>
+	
+						<td>
+							<font face="Verdana" size="8" color="white">
+								<b>CloudFront Rule Engine</b>
+							</font>
+						</td>
 
-<h1>CloudFront rule engine</h1>
+						<td width="15%">
+							
+						</td>
 
-<p>1. Test the A/B testing rule, by visiting the <a href="/about.html">about</a> page.</p>
+						<td>
+							<a href="/index.html" style="text-decoration:none">
+								<font face="Verdana" size="5" color="white">
+									Home
+								</font>
+							</a>
+						</td>
 
-<p>2. Test origin routing rules using the below buttons </p>
-<table>
-    <tr>
-        <td><button onclick='api1()'>API1()</button></td>
-        <td><p id='api1'></p></td>
-    </tr>
-    <tr>
-        <td><button onclick='api2()'>API2()</button></td>
-        <td><p id='api2'></p></td>
-    </tr>
-</table>
+						<td>
+							|
+						</td>
 
-<p>3. Test the authorization rule, by visiting the <a href="/admin.html">admin</a> page.</p>
+						<td>
+							<a href="/about.html" style="text-decoration:none">
+								<font face="Verdana" size="5" color="white">
+									About
+								</font>
+							</a>
+						</td>
 
-<p>4. Test the geoblocking rule, by connecting from a banned country using VPN.</p>
+						<td>
+							|
+						</td>
 
-<script>
-    function api1() {
-      const container = document.getElementById('api1');
-      container.innerHTML = '';
-      fetch("/api/a",{}).then(response => {
-          response.json().then(myJson => { container.innerHTML = myJson.version });
-      });
-    }
-    function api2() {
-      const container = document.getElementById('api2');
-      container.innerHTML = '';
-      fetch("/api/b",{}).then(response => {
-          response.json().then(myJson => { container.innerHTML = myJson.version });
-      });
-    }
-</script>
-</body>
-</html>
+						<td>
+							<a href="/admin.html" style="text-decoration:none">
+								<font face="Verdana" size="5" color="white">
+									Admin
+								</font>
+							</a>
+						</td>
+
+					</tr>
+				</tbody></table>
+			</td>
+		</tr>
+	</tbody></table>
+	<!--Header(end)-->
+
+
+
+	<!--About(start)-->
+	<table id="about" border="0" width="100%" cellpadding="0" cellspacing="0" bgcolor="black">
+		<tbody><tr>
+			<td>
+				<table border="0" cellpadding="15" cellspacing="0" width="80%" align="center">
+					<tbody><tr>
+						<td height="180" align="left" valign="middle" colspan="2">
+							<font face="Verdana" size="7" color="#0066cc">
+								Home
+							</font>
+							<hr align="left" color="#0066cc" width="90">
+						</td>
+					</tr>
+
+					<tr>
+						<td>
+							<font face="Verdana" size="4" color="white">
+								This website demonstrates the usage of CloudFront Function to execute rules when processing incoming HTTP requests. Rules are stored in KVS and can be viewed in the rules.array file. This solution allows customers to dyanmically customize the processing of HTTP requests, wihtout changing CloudFront configuration.
+                                <hr color="black">
+                                To test the embargoedCountries rule, by connecting using a VPN from France or Ukrain. You will be be blocked with a 403 response code.
+                                <hr color="black">
+                                This page makes API calls to two backends based on Lambda+APIG. Each call is dynamically routed to a different API endpoint wihtout any configuration needed in CloudFront.
+                                <table>
+                                    <tr>
+                                        <td><button onclick='api1()'>Fetch clients</button></td>
+                                        <td><p id='api1'>>api result</p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><button onclick='api2()'>Fetch orders</button></td>
+                                        <td><p id='api2'>>api result</p></td>
+                                    </tr>
+                                </table>
+                                <hr color="black">
+                                To test the aboutABtesting rule, navigate to the About page, and refresh it multiple times. You will get version A 50% of time, and B 50% of time.
+                                <hr color="black">
+                                Finally, test the adminRedirect and adminAccess rules by navigating to the Admin page. First you will be redirected to a login page because the session cookie will not be detected. After login, you will be able to access the Admin page.
+							</font>
+						</td>
+					</tr>
+
+				</tbody></table>
+				<hr color="black">
+				<hr color="black">
+				<hr color="black">
+			</td>
+		</tr>
+	</tbody></table>
+	<!--About(end)-->
+
+    <script>
+        function api1() {
+          const container = document.getElementById('api1');
+          container.innerHTML = '';
+          fetch("/api/clients",{}).then(response => {
+              response.json().then(myJson => { container.innerHTML = myJson.message });
+          });
+        }
+        function api2() {
+          const container = document.getElementById('api2');
+          container.innerHTML = '';
+          fetch("/api/orders",{}).then(response => {
+              response.json().then(myJson => { container.innerHTML = myJson.message });
+          });
+        }
+    </script>
+
+
+</body></html>

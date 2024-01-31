@@ -1,0 +1,154 @@
+[
+    {
+        "name" : "rules",    
+        "value" :
+        {
+            "embargoedCountries": {
+                "|": [
+                    {
+                        "=": {
+                            "header": {
+                                "cloudfront-viewer-country": "UA"
+                            }
+                        }
+                    },
+                    {
+                        "=": {
+                            "header": {
+                                "cloudfront-viewer-country": "FR"
+                            }
+                        }
+                    }
+                ]
+            },
+            "adminRedirect": {
+                "&": [
+                    {
+                        "=": {
+                            "uri": "/admin.html"
+                        }
+                    },
+                    {
+                        "exist": {
+                            "cookie": {
+                                "session": "false"
+                            }
+                        }
+                    }
+                ]
+            },
+            "adminAccess": {
+                "=": {
+                    "uri": "/admin.html"
+                }
+            },
+            "api_a": {
+                "startwith": {
+                    "uri": "/api/clients"
+                }
+            },
+            "api_b": {
+                "startwith": {
+                    "uri": "/api/orders"
+                }
+            },
+            "aboutABtesting": {
+                "=": {
+                    "uri": "/about.html"
+                }
+            },
+            "default": {
+                "match": {
+                    "uri": ".*"
+                }
+            }
+        }
+    },
+    {
+        "name": "embargoedCountries",
+        "value": {
+            "respond": {
+                "status": 403
+            }
+        }
+    },
+    {
+        "name": "adminRedirect",
+        "value": {
+            "respond": {
+                "status": 307,
+                "setRespHeaders": {
+                    "location": "/login.html"
+                }
+            }
+        }
+    },
+    {
+        "name": "adminAccess",
+        "value": {
+                "forward": {
+                    "origin": "__ORIGIN_S3_BUCKET__",
+                    "auth": {
+                        "key": "LzdWGpAToQ1DqYuzHxE6YOqi7G3X2yvNBot9mCXfx5k"
+                    }
+                }
+        }
+    },
+    {
+        "name": "api_a",
+        "value": {
+            "forward": {
+                "origin": "___APIA___",
+                "setReqHeaders": {
+                    "x-secret-key": "lPuzHxE0KOqi7GS34y"
+                },
+                "changeUri": "/prod/clients"
+            }
+        }
+    },
+    {
+        "name": "api_b",
+        "value": {
+            "forward": {
+                "origin": "___APIB___",
+                "setReqHeaders": {
+                    "x-secret-key": "lPuzHxE0KOqi7GS34y"
+                },
+                "changeUri": "/prod/orders"
+            }
+        }
+    },
+    {
+        "name": "aboutABtesting",
+        "value": {
+            "canary": [
+                [
+                    50,
+                    {
+                        "forward": {
+                            "origin": "__ORIGIN_S3_BUCKET__",
+                            "changeUri": "/about.html"
+                        }
+                    }
+                ],
+                [
+                    50,
+                    {
+                        "forward": {
+                            "origin": "__ORIGIN_S3_BUCKET__",
+                            "changeUri": "/about2.html"
+                        }
+                    }
+                ]
+            ]
+        }
+    },
+    {
+        "name": "default",
+        "value": {
+            "forward": {
+                "origin": "__ORIGIN_S3_BUCKET__"
+            }
+        }
+    }
+]
