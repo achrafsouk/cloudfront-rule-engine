@@ -96,14 +96,10 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
     const cfFunction = new cloudfront.Function(this, 'CFFunction', {
       code: cloudfront.FunctionCode.fromInline(cloudFrontFunctionCode),
       runtime: cloudfront.FunctionRuntime.JS_2_0,
-      functionName: 'rulesEngine'
+      functionName: 'rulesEngine',
+      keyValueStore: kvs
     });
 
-    // Associate CloudFront Function to KVS 
-    (cfFunction.node.defaultChild as cloudfront.CfnFunction).addPropertyOverride("FunctionConfig.KeyValueStoreAssociations",
-      [{ 
-      'KeyValueStoreARN': kvs.keyValueStoreArn
-      }]);
 
     // Using Lambda@Edge on origin request evennt temporarily 
     // until CloudFront Functions supports origin selection
