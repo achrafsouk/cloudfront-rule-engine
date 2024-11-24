@@ -204,9 +204,15 @@ function applyActions(inputObj, actions) {
                 }
             }
             const origin = args["origin"];
+            // TODO make it more sofisticated for origin properties
             if(origin) {
-                // TODO returnObj.origin.domain = origin when CloudFront Function supports origin selection
-                returnObj.headers["x-origin"] = {"value": origin};
+                cf.updateRequestOrigin({
+                    "domainName" : origin,
+                    "timeouts": {
+                        "readTimeout": 30,
+                        "connectionTimeout": 5
+                    }
+                });
             } else throw new Error('Origin missing in forward action');
             const reqHeaders = args["setReqHeaders"];
             if (reqHeaders) {

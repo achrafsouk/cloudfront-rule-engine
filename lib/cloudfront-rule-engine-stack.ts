@@ -98,59 +98,7 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       runtime: cloudfront.FunctionRuntime.JS_2_0,
       functionName: 'rulesEngine',
       keyValueStore: kvs
-    });
-
-
-    // Using Lambda@Edge on origin request evennt temporarily 
-    // until CloudFront Functions supports origin selection
-    // TODO remove this section all together when the feature is out.
-    const originSelection = new cloudfront.experimental.EdgeFunction(this, 'MyFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromInline(`
-      exports.handler = async function(event) {
-        const request = event.Records[0].cf.request;
-        if (request.headers['x-origin'] && request.headers['x-origin'][0].value) {
-          let origin = request.headers['x-origin'][0].value;
-          if (origin.startsWith("s3://")) {
-            origin = origin.slice(5)+".s3.amazonaws.com";
-            request.origin = {
-              s3: {
-                  domainName: origin,
-                  region: 'us-east-1',
-                  authMethod: 'origin-access-identity',
-                  path: '',
-                  customHeaders: {}
-              }
-            };
-            request.headers['host'] = [{ key: 'host', value: origin}];
-            return request;
-          } else {
-            origin = origin.slice(8);
-            request.origin = {
-              custom: {
-                  domainName: origin,
-                  port: 443,
-                  protocol: 'https',
-                  path: '',
-                  sslProtocols: ['TLSv1', 'TLSv1.1'],
-                  readTimeout: 5,
-                  keepaliveTimeout: 5,
-                  customHeaders: {}
-              }
-            };
-          request.headers['host'] = [{ key: 'host', value: origin}];
-          return request;
-          }
-        }
-        console.log("No x-origin header sent");
-        return {
-          statusCode: '500',
-          statusDescription: 'Internal Server Error',
-        };
-      };
-    `),
-    });
+    });  
 
     // Create the CloudFront distribution
     const cloudfrontDistribution = new cloudfront.Distribution(this, 'Distribution', {
@@ -170,13 +118,7 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
           functionAssociations: [{
             function: cfFunction,
             eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-          }],
-          edgeLambdas: [
-            {
-              functionVersion: originSelection.currentVersion,
-              eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
-            }
-          ],
+          }]
       },    
     });
 
