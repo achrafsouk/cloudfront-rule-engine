@@ -2,7 +2,7 @@
 
 This solution demonstrates the usage of CloudFront Function to execute rules when processing incoming HTTP requests. Rules are stored in KVS and can be viewed in the rules.array file. This solution allows customers to dyanmically customize the processing of HTTP requests, wihtout changing CloudFront configuration:
 * For customers who have requirements for more complex request matching/processing needs that what is possible natively with Cache behaviors, this content will provide a framework to get started quicker in implementing such requirements.
-* For customers who has advanced origin routing needs, this content will be also a blue print for such implementations. This is dependent on the release of the origin selection feature in CloudFront functions. Example customer needs:
+* For customers who has advanced origin routing needs, this content could be also a blue print for such implementations. This is dependent on the release of the origin selection feature in CloudFront functions. Example customer needs:
     * During Cloud  migrations like [TrueCar](https://aws.amazon.com/blogs/networking-and-content-delivery/truecars-dynamic-routing-with-aws-lambdaedge/)
     * Tenant routing like [Outsystems](https://aws.amazon.com/blogs/architecture/dynamic-request-routing-in-multi-tenant-systems-with-amazon-cloudfront/)
     * Routing to multiple Kubernetes clusters either for tenant isolation, multi region deployments, and cellular architectures, [related blog](https://aws.amazon.com/blogs/containers/how-to-leverage-application-load-balancers-advanced-request-routing-to-route-application-traffic-across-multiple-amazon-eks-clusters/)
