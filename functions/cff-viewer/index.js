@@ -206,13 +206,25 @@ function applyActions(inputObj, actions) {
             const origin = args["origin"];
             // TODO make it more sofisticated for origin properties
             if(origin) {
-                cf.updateRequestOrigin({
-                    "domainName" : origin,
-                    "timeouts": {
-                        "readTimeout": 30,
-                        "connectionTimeout": 5
-                    }
-                });
+                if (origin.includes('s3.amazonaws.com') {
+                    cf.updateRequestOrigin({
+                        "domainName" : origin,
+                        "originAccessControlConfig": {
+                                "enabled": true,
+                                "signingBehavior": "always",
+                                "signingProtocol": "sigv4",
+                                "originType": "s3"
+                            }
+                    });
+                } else {
+                    cf.updateRequestOrigin({
+                        "domainName" : origin,
+                        "timeouts": {
+                            "readTimeout": 30,
+                            "connectionTimeout": 5
+                        }
+                    });
+                }
             } else throw new Error('Origin missing in forward action');
             const reqHeaders = args["setReqHeaders"];
             if (reqHeaders) {

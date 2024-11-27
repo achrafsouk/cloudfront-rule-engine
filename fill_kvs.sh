@@ -1,5 +1,4 @@
-BUCKET_RAW=$(cat outputs.json | jq -r ".CloudfrontRuleEngineStack.s3bucket")
-BUCKET=$(echo "s3://$BUCKET_RAW")
+BUCKET=$(cat outputs.json | jq -r ".CloudfrontRuleEngineStack.s3bucket")
 KVS_ARN=$(cat outputs.json | jq -r ".CloudfrontRuleEngineStack.kvsarn")
 APIA_RAW=$(cat outputs.json | jq -r ".CloudfrontRuleEngineStack.apia")
 APIA=${APIA_RAW::${#APIA_RAW}-6}
