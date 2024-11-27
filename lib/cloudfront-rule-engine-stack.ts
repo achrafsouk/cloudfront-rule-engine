@@ -61,8 +61,6 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
         new apiGateway.LambdaIntegration(functionB, {proxy: true}),
     );
 
-    apiB.domainName
-
     // S3 bucket to host the website files
     const originBucket = new s3.Bucket(this, 'origin-bucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -124,8 +122,8 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 's3-bucket', { value: originBucket.bucketRegionalDomainName});
     new cdk.CfnOutput(this, 'kvs-arn', { value: kvs.keyValueStoreArn});
-    new cdk.CfnOutput(this, 'api-a', { value: apiA.url});
-    new cdk.CfnOutput(this, 'api-b', { value: apiB.url});
+    new cdk.CfnOutput(this, 'api-a', { value: apiA.url.substring(8)});
+    new cdk.CfnOutput(this, 'api-b', { value: apiB.url.substring(8)});
     new cdk.CfnOutput(this, 'HTML URL', {value: cloudfrontDistribution.distributionDomainName+'/index.html'});
            
   }

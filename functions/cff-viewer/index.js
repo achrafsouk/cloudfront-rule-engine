@@ -209,19 +209,14 @@ function applyActions(inputObj, actions) {
                 if (origin.includes('.s3.')) {
                     cf.updateRequestOrigin({
                         "domainName" : origin,
-                        "originAccessControlConfig": {
-                                "enabled": true,
-                                "signingBehavior": "always",
-                                "signingProtocol": "sigv4",
-                                "originType": "s3"
-                            }
                     });
                 } else {
                     cf.updateRequestOrigin({
                         "domainName" : origin,
-                        "timeouts": {
-                            "readTimeout": 30,
-                            "connectionTimeout": 5
+                        "customOriginConfig" : {
+                            "port" : 443,
+                            "protocol" : "https",
+                            "sslProtocols": ["TLSv1.2"],
                         }
                     });
                 }
