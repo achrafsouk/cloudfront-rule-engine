@@ -105,7 +105,7 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       comment: 'CloudFront Rule Engine example',
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2018,
       defaultBehavior: {
-          origin: new origins.S3BucketOrigin.withOriginAccessControl(originBucket),
+          origin: origins.S3BucketOrigin.withOriginAccessControl(originBucket),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: new cloudfront.CachePolicy(this, `ImageCachePolicy${this.node.addr}`, {
             defaultTtl: cdk.Duration.seconds(0),
