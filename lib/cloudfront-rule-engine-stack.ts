@@ -122,7 +122,7 @@ export class CloudfrontRuleEngineStack extends cdk.Stack {
       },    
     });
 
-    new cdk.CfnOutput(this, 's3-bucket', { value: originBucket.bucketDomainName});
+    new cdk.CfnOutput(this, 's3-bucket', { value: originBucket.bucketRegionalDomainName});
     new cdk.CfnOutput(this, 'kvs-arn', { value: kvs.keyValueStoreArn});
     new cdk.CfnOutput(this, 'api-a', { value: apiA.url});
     new cdk.CfnOutput(this, 'api-b', { value: apiB.url});
