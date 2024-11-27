@@ -206,7 +206,7 @@ function applyActions(inputObj, actions) {
             const origin = args["origin"];
             // TODO make it more sofisticated for origin properties
             if(origin) {
-                if (origin.includes('s3.amazonaws.com') {
+                if (origin.includes('s3.amazonaws.com')) {
                     cf.updateRequestOrigin({
                         "domainName" : origin,
                         "originAccessControlConfig": {
