@@ -28,6 +28,8 @@ bash fill_kvs.sh
 
 The last command, executes a bash script to fill KVS with the rules, based on the template in /rules/rule.array with resource values replaced by the output of the CDK deploy step.
 
+In the output of CDK, there is an HTML url. Click on it to view the demo. Follow the instructions on the home page to navigate the demo.
+
 # Origin selection in CloudFront Functions
 
 Since reInvent 2024, CloudFront Functions allows you to [dynamically select the origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/helper-functions-origin-modification.html) using the ```updateRequestOrigin``` method.
