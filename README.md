@@ -1,55 +1,54 @@
-# CloudFront Rule Engine
+# Rule Engine demo using CloudFront Functions
 
-This solution demonstrates the usage of CloudFront Function to execute rules when processing incoming HTTP requests. Rules are stored in KVS and can be viewed in the rules.array file. This solution allows customers to dyanmically customize the processing of HTTP requests, wihtout changing CloudFront configuration:
-* For customers who have requirements for more complex request matching/processing needs that what is possible natively with Cache behaviors, this content will provide a framework to get started quicker in implementing such requirements.
-* For customers who has advanced origin routing needs, this content could be also a blue print for such implementations. This is dependent on the release of the origin selection feature in CloudFront functions. Example customer needs:
-    * During Cloud  migrations like [TrueCar](https://aws.amazon.com/blogs/networking-and-content-delivery/truecars-dynamic-routing-with-aws-lambdaedge/)
-    * Tenant routing like [Outsystems](https://aws.amazon.com/blogs/architecture/dynamic-request-routing-in-multi-tenant-systems-with-amazon-cloudfront/)
-    * Routing to multiple Kubernetes clusters either for tenant isolation, multi region deployments, and cellular architectures, [related blog](https://aws.amazon.com/blogs/containers/how-to-leverage-application-load-balancers-advanced-request-routing-to-route-application-traffic-across-multiple-amazon-eks-clusters/)
+In this repo, you can find a example of a rule engine completely implemented using CloudFront Functions. If you have dynamic requirements for sophisiticated for request matching/processing, that can't be met using the native and static path based CloudFront cache behaviors, you can consider this sample code to understand the concept.
 
-## Deploy the solution
+The way it works is simple. The CloudFront distribution has a single default cache behavior pointing to an S3 bucket, and a CloudFront Function attached to it on the viewer request, that processes all requests received by CloudFront.
 
-To deploy the solution, first configure your AWS CLI to us-east 1 region, then exectue the following command lines
+For every processed request, the functions goes through the following steps
+
+``` javascript 
+const rules = await fetchRules(); // fetch the rule list from KeyValueStore (KVS).
+const matchingRuleId = getMatchingRuleId(request, rules); // Loop through rules to find the first matching one. 
+const matchingRuleActions = await getRuleActions(matchingRuleId); // Fetch the actions of the rule that matched from KVS.
+return applyRuleActions(request, matchingRuleActions); // Finally apply the rule actions to the request and return.
+
+``` 
+
+## Deploy the demo
+
+Deploy the solution in us-east-1 region, using an EC2 instance or the AWS CloudShell. Execute the following command lines
+
 ```
+git clone https://github.com/achrafsouk/cloudfront-rule-engine.git
+cd cloudfront-rule-engine
 npm install
 cdk deploy --outputs-file outputs.json
 bash fill_kvs.sh
 ```
 
-## Rule engine description
+The last command, executes a bash script to fill KVS with the rules, based on the template in /rules/rule.array with resource values replaced by the output of the CDK deploy step.
 
-high level description of the code:
+# Origin selection in CloudFront Functions
 
-```
-async function handler(event) {
-    var request = event.request
-    
-    try {
-        const rules = await fetchRules();
-        const matchingRuleId = getMatchingRuleId(request, rules);
-        const matchingRuleActions = await getRuleActions(matchingRuleId);
-        return applyRuleActions(request, matchingRuleActions);
-        
-    } catch (err) {
-        console.log(err);
-        if (err instanceof EvalError) {
-            throw new Error('fail close, request with no matching rule');
-        } else {
-            return {
-                statusCode: 500,
-                statusDescription: 'Internal Server Error',
-                body: {
-                    'encoding': 'text',
-                    'data': err.message
-                }
-                
-            };
-        }
-    }
-}
-```
+Since reInvent 2024, CloudFront Functions allows you to [dynamically select the origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/helper-functions-origin-modification.html) using the ```updateRequestOrigin``` method.
 
-**fetchRules()** to fetch the rule list from KVS. An example list of three rules stored in KVS:
+I have shared my mental model of Amazon CloudFront in the past: A highly available global reverse proxy, where customers can enable bells and whistles to implement specific requirements. One of the common requirements I come across is routing requests to backends. 
+
+When it's a simple load balancing need, I recommend starting applying Route 53 policies on the backend DNS domain names, that CloudFront will respect when resolving them. However, when the routing logic is more sophisticated, requiring application layer attributes, then using Lambda@Edge becomes mandatory. 
+
+With the origin selection capability made also available in CloudFront functions, backend routing implementation can be now cheaper and faster. Here are common use cases for backend routing:
+
+▶ Cell-based architectures
+▶ Multi-region architectures with different routing logic, whether geo based or latency based
+▶ Dynamic routing of APIs using a single domain
+▶ User-based routing for scenarios such as data residency, routing to the corresponding host in a multi-tenant/SaaS infrastructure, routing to different tiers of service, routing malicious sources to honeypots, etc..
+▶ Failover scenarios, ranging from graceful ones, waiting rooms, to active passive setups.
+▶ During migrations, e.g. DC to cloud using the strangler pattern.
+
+
+## Example rules
+
+An example list of three rules stored in KVS:
 ```
 {
             "embargoedCountries": {
@@ -98,10 +97,8 @@ async function handler(event) {
             },
 }
 ```
-**getMatchingRuleId()** Loop through rules to find matching ones. Decide if you want to apply all rules that match, or only the first one that matches.
 
-
-**getRuleActions()** Fetch the actions of the rule that matched from KVS.  An example rule action:
+An example of a rule action:
 ```
     {
         "name": "adminRedirect",
@@ -115,18 +112,13 @@ async function handler(event) {
         }
     }
 ```
-**applyRuleActions()** Finally apply rules to request and return.
 
+## TODOs
 
-CloudFront distribution is only confifigured with one default cache behavior and the S3 origin.
-
-
-## Roadmap
-
-Remove Lambda@Edge and enable CloudFront Function origin selection when released
-Add the possibility of non terminating rule
-Add URL actions, such as prefix and suffix:
-Add caching controls
-Make operation names customizable
-Add recommendations for optimzing the code
-Key generation
+* Improve the login experience with an endpoint, and automated key generation
+* Review and optimize the code
+* Rule engine
+** Add the possibility of non terminating rule
+** Add URL actions, such as prefix and suffix
+** Add caching controls
+** Make operation names customizable
