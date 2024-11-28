@@ -129,3 +129,4 @@ Add URL actions, such as prefix and suffix:
 Add caching controls
 Make operation names customizable
 Add recommendations for optimzing the code
+Key generation
