@@ -38,12 +38,12 @@ When it's a simple load balancing need, I recommend starting applying Route 53 p
 
 With the origin selection capability made also available in CloudFront functions, backend routing implementation can be now cheaper and faster. Here are common use cases for backend routing:
 
-▶ Cell-based architectures
-▶ Multi-region architectures with different routing logic, whether geo based or latency based
-▶ Dynamic routing of APIs using a single domain
-▶ User-based routing for scenarios such as data residency, routing to the corresponding host in a multi-tenant/SaaS infrastructure, routing to different tiers of service, routing malicious sources to honeypots, etc..
-▶ Failover scenarios, ranging from graceful ones, waiting rooms, to active passive setups.
-▶ During migrations, e.g. DC to cloud using the strangler pattern.
+* **Cell-based architectures**
+* **Multi-region architectures** with different routing logic, whether geo based or latency based
+* **Dynamic routing of APIs** using a single domain
+* **User-based routing** for scenarios such as data residency, routing to the corresponding host in a multi-tenant/SaaS infrastructure, routing to different tiers of service, routing malicious sources to honeypots, etc..
+* **Failover scenarios**, ranging from graceful ones, waiting rooms, to active passive setups.
+* **During migrations**, e.g. DC to cloud using the strangler pattern.
 
 
 ## Example rules
