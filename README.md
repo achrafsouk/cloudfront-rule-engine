@@ -12,7 +12,10 @@ const matchingRuleId = getMatchingRuleId(request, rules); // Loop through rules 
 const matchingRuleActions = await getRuleActions(matchingRuleId); // Fetch the actions of the rule that matched from KVS.
 return applyRuleActions(request, matchingRuleActions); // Finally apply the rule actions to the request and return.
 
-``` 
+```
+
+This pattern would incur 0.16$ for every million request processed, to account for the cost of CloudFront Function and KVS. Note that you have 1M request processed for free every month thanks to the always on free tier.
+
 
 ## Deploy the demo
 
